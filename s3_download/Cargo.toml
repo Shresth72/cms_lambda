@@ -16,15 +16,12 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.86"
-async-compression = { version = "0.4.10", features = ["tokio", "zstd"] }
+aws-config = { version = "1.5.0", features = ["behavior-version-latest"] }
+aws-sdk-s3 = "1.31.0"
 lambda_http = "0.11.1"
 lambda_runtime = "0.11.2"
-rusoto_core = "0.48.0"
-rusoto_s3 = "0.48.0"
 serde = "1.0.203"
-serde_json = "1.0.117"
 
 tokio = { version = "1", features = ["macros", "full"] }
 tracing = { version = "0.1.40", features = ["log"] }
-tracing-subscriber = { version = "0.3.18", features = ["fmt"] }
 
