@@ -18,7 +18,7 @@ export class S3BucketStack extends Construct {
       encryption: BucketEncryption.S3_MANAGED,
       enforceSSL: true,
       versioned: false,
-      removalPolicy: RemovalPolicy.DESTROY,
+      removalPolicy: RemovalPolicy.DESTROY, // change later
     });
   }
 }

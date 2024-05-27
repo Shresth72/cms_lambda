@@ -8,7 +8,7 @@ import { IFunction } from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 
 interface ApiGatewayStackProps {
-  getS3ResourcesLambda: IFunction;
+  S3ResourcesLambda: IFunction;
 }
 
 interface ResourceType {
@@ -24,13 +24,13 @@ export class ApiGatewayStack extends Construct {
 
   addResource(
     serviceName: string,
-    { getS3ResourcesLambda }: ApiGatewayStackProps,
+    { S3ResourcesLambda }: ApiGatewayStackProps,
   ) {
     const apigw = new aws_apigateway.RestApi(this, `${serviceName}-ApiGtw`);
 
-    this.createEndPoints(getS3ResourcesLambda, apigw, {
+    this.createEndPoints(S3ResourcesLambda, apigw, {
       name: "downloader",
-      methods: ["GET"],
+      methods: ["GET", "POST"],
     });
   }
 
