@@ -10,7 +10,8 @@ use std::io::Read;
 #[derive(Deserialize)]
 #[serde(rename_all = "PascalCase")]
 struct Request {
-    records: Vec<Record>,
+    // records: Vec<Record>,
+    key: String,
 }
 
 #[derive(Serialize)]
@@ -38,13 +39,13 @@ async fn main() -> anyhow::Result<()> {
 
 async fn function_handler(event: LambdaEvent<Value>, client: &Client) -> anyhow::Result<Response> {
     let request: Request = serde_json::from_value(event.payload)?;
-    let record = &request.records[0];
-    let key = &record.s3.object.key;
+    // let record = &request.records[0];
+    let key = &request.key;
 
     // send a request to S3 bucket to get the new bucket entry
     let resp = client
         .get_object()
-        .bucket(&record.s3.bucket.name)
+        .bucket(std::env::var("BUCKET_NAME").expect("No BUCKET_NAME in the environment variables"))
         .key(key)
         .response_content_type("application/json")
         .send()
@@ -84,6 +85,7 @@ async fn function_handler(event: LambdaEvent<Value>, client: &Client) -> anyhow:
     })
 }
 
+/*
 #[derive(Deserialize)]
 struct S3Object {
     key: String,
@@ -104,3 +106,4 @@ struct S3 {
 struct Record {
     s3: S3,
 }
+*/
