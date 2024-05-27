@@ -29,8 +29,8 @@ export class ApiGatewayStack extends Construct {
     const apigw = new aws_apigateway.RestApi(this, `${serviceName}-ApiGtw`);
 
     this.createEndPoints(S3ResourcesLambda, apigw, {
-      name: "downloader",
-      methods: ["GET", "POST"],
+      name: "resources",
+      methods: ["GET", "PUT"],
     });
   }
 
