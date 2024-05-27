@@ -1,8 +1,8 @@
 {
-  "name": "deploy",
+  "name": "cms_lambda",
   "version": "0.1.0",
   "bin": {
-    "deploy": "bin/deploy.js"
+    "cms_lambda": "bin/cms_lambda.js"
   },
   "scripts": {
     "build": "tsc",
@@ -23,7 +23,6 @@
     "aws-cdk-lib": "2.128.0",
     "constructs": "^10.0.0",
     "source-map-support": "^0.5.21",
-    "uuid": "^9.0.1",
-    "uuidv4": "^6.2.13"
+    "uuid": "^9.0.1"
   }
 }

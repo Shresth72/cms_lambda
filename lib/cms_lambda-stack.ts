@@ -4,7 +4,7 @@ import { S3BucketStack } from "./s3bucket-stack";
 import { ServiceStack } from "./service-stack";
 import { ApiGatewayStack } from "./api-gateway-stack";
 
-export class DeployStack extends cdk.Stack {
+export class CmsLambdaStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 

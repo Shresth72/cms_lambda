@@ -1,5 +1,11 @@
 import { Duration } from "aws-cdk-lib";
-import { Function, Runtime, Code, FunctionProps } from "aws-cdk-lib/aws-lambda";
+import {
+  Function,
+  Runtime,
+  Code,
+  FunctionProps,
+  Architecture,
+} from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 import { join } from "path";
 
@@ -16,11 +22,14 @@ export class ServiceStack extends Construct {
     super(scope, id);
 
     this.s3DownloadService = new Function(this, "s3DownloadLambda", {
-      code: Code.fromAsset("../../s3_download/target/lambda/s3_download"),
+      description: "S3 Download Rust function on lambda using custom runtime",
+      code: Code.fromAsset(""),
       runtime: Runtime.PROVIDED_AL2,
+      architecture: Architecture.X86_64,
       timeout: Duration.seconds(10),
-      handler: "nil",
+      handler: "not.required",
       environment: {
+        RUST_BACKTRACE: "1",
         BUCKET_NAME: props.bucket,
       },
     });
