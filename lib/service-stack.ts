@@ -16,14 +16,16 @@ interface ServiceProps {
 }
 
 export class ServiceStack extends Construct {
-  public readonly s3DownloadService: Function;
+  public readonly getS3ResourcesLambda: Function;
 
   constructor(scope: Construct, id: string, props: ServiceProps) {
     super(scope, id);
 
-    this.s3DownloadService = new Function(this, "s3DownloadLambda", {
+    this.getS3ResourcesLambda = new Function(this, "getS3ResourcesLambda", {
       description: "S3 Download Rust function on lambda using custom runtime",
-      code: Code.fromAsset(""),
+      code: Code.fromAsset(
+        "get_resources/target/X86_64-unknown-linux-musl/get_release/lambda",
+      ),
       runtime: Runtime.PROVIDED_AL2,
       architecture: Architecture.X86_64,
       timeout: Duration.seconds(10),
