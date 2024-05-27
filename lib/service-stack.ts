@@ -24,7 +24,7 @@ export class ServiceStack extends Construct {
     this.S3ResourcesLambda = new Function(this, "S3ResourcesLambda", {
       description: "S3 Download Rust function on lambda using custom runtime",
       code: Code.fromAsset(
-        "get_resources/target/X86_64-unknown-linux-musl/get_release/lambda",
+        "resources/target/X86_64-unknown-linux-musl/release/lambda",
       ),
       runtime: Runtime.PROVIDED_AL2,
       architecture: Architecture.X86_64,
