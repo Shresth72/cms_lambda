@@ -20,6 +20,8 @@ struct Params {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    std::env::set_var("AWS_LAMBDA_HTTP_IGNORE_STAGE_IN_PATH", "true");
+
     let config = aws_config::load_from_env().await;
     let s3_client = Client::new(&config);
 
