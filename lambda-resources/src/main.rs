@@ -47,6 +47,7 @@ async fn main() -> anyhow::Result<()> {
     let s3_client = Client::new(&config);
 
     tracing::init_default_subscriber();
+    // Add cors
 
     run(service_fn(|event: LambdaEvent<ApiGatewayProxyRequest>| {
         function_handler(event, &s3_client)
