@@ -17,14 +17,15 @@ interface ServiceProps {
 
 export class ServiceStack extends Construct {
   public readonly S3ResourcesLambda: Function;
+  // public readonly MultiPartUploadLambda: Function;
 
   constructor(scope: Construct, id: string, props: ServiceProps) {
     super(scope, id);
 
     this.S3ResourcesLambda = new Function(this, "S3ResourcesLambda", {
-      description: "S3 Download Rust function on lambda using custom runtime",
+      description: "S3 Resource Manager Lambda for smaller files",
       code: Code.fromAsset(
-        "resources/target/X86_64-unknown-linux-musl/release/lambda",
+        "lambda-resources/target/X86_64-unknown-linux-musl/release/lambda",
       ),
       runtime: Runtime.PROVIDED_AL2,
       architecture: Architecture.X86_64,

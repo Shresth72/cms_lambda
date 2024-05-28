@@ -18,8 +18,8 @@ export class CmsLambdaStack extends cdk.Stack {
     });
 
     // Grant different access to only lambdas with s3 needed
-    // Grant only read access to s3DownloadService
-    bucket.grantRead(S3ResourcesLambda);
+    // Grant readwrite access to only S3ResourcesLambda
+    bucket.grantReadWrite(S3ResourcesLambda);
 
     new ApiGatewayStack(this, "cmsApiGateway", {
       S3ResourcesLambda,
