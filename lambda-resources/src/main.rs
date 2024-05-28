@@ -1,97 +1,81 @@
+mod s3;
+use s3::{generate_presigned_url, list_content};
+
 mod utils;
-use utils::{generate_presigned_url, list_content};
+use utils::{empty_string_as_none, handle_response};
 
-use aws_lambda_events::{
-    event::apigw::{ApiGatewayProxyRequest, ApiGatewayProxyResponse},
-    http::HeaderMap,
-};
 use aws_sdk_s3::Client;
-use lambda_runtime::{run, service_fn, tracing, LambdaEvent};
-use serde::Serialize;
+use axum::{extract::Query, response::IntoResponse, routing::get, Extension, Json, Router};
+use lambda_http::{http::Method, tracing, Error};
+use serde::Deserialize;
+use serde_json::json;
+use tower_http::cors::{Any, CorsLayer};
 
-#[derive(Serialize)]
-struct PresignedUrlResponse {
-    req_id: String,
-    url: String,
-}
-
-#[derive(Serialize)]
-struct ListContentResponse {
-    req_id: String,
-    keys: Vec<String>,
-}
-
-trait ApiResponse {
-    fn new(status_code: i64, body: &str) -> Self;
-}
-
-impl ApiResponse for ApiGatewayProxyResponse {
-    fn new(status_code: i64, body: &str) -> Self {
-        // TODO: fix headers
-        let headers = HeaderMap::default();
-        // headers.insert("content-type", "text/html".parse().unwrap());
-
-        ApiGatewayProxyResponse {
-            status_code,
-            multi_value_headers: headers.clone(),
-            is_base64_encoded: false,
-            body: Some(aws_lambda_events::encodings::Body::Text(body.to_string())),
-            headers,
-        }
-    }
+#[derive(Deserialize)]
+#[allow(dead_code)]
+struct Params {
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    key: Option<String>,
 }
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<(), Error> {
     let config = aws_config::load_from_env().await;
     let s3_client = Client::new(&config);
 
     tracing::init_default_subscriber();
 
-    run(service_fn(|event: LambdaEvent<ApiGatewayProxyRequest>| {
-        function_handler(event, &s3_client)
-    }))
-    .await
-    .unwrap();
+    let cors_layer = CorsLayer::new()
+        .allow_methods(vec![Method::GET, Method::PUT, Method::DELETE])
+        .allow_origin(Any); // TODO: Add Cors for our APiGateway Endpoint only
 
-    Ok(())
+    let app = Router::new()
+        .route(
+            "/",
+            get(get_handler).put(put_handler).delete(delete_handler),
+        )
+        .layer(cors_layer)
+        .layer(Extension(s3_client));
+
+    lambda_http::run(app).await
 }
 
-async fn function_handler(
-    event: LambdaEvent<ApiGatewayProxyRequest>,
-    client: &Client,
-) -> anyhow::Result<ApiGatewayProxyResponse> {
-    match (
-        event.payload.http_method.as_str(),
-        event.payload.query_string_parameters,
-    ) {
-        ("GET", query_params) => {
-            if let Some(key) = query_params.first("key") {
-                generate_presigned_url(client, "GetObject", key, &event.context.request_id).await
-            } else {
-                list_content(client, &event.context.request_id).await
-            }
+async fn get_handler(
+    Query(params): Query<Params>,
+    Extension(client): Extension<Client>,
+) -> impl IntoResponse {
+    let response = if let Some(key) = params.key {
+        generate_presigned_url(&client, "GetObject", key).await
+    } else {
+        list_content(&client).await
+    };
+    handle_response(response)
+}
+
+async fn put_handler(
+    Query(params): Query<Params>,
+    Extension(client): Extension<Client>,
+) -> impl IntoResponse {
+    if let Some(key) = params.key {
+        match generate_presigned_url(&client, "PutObject", key).await {
+            Ok(response) => Json(response),
+            Err(err) => Json(json!({"error": format!("Internal Server Error: {}", err)})),
         }
-        ("PUT", query_params) => {
-            if let Some(key) = query_params.first("key") {
-                generate_presigned_url(client, "PutObject", key, &event.context.request_id).await
-            } else {
-                Ok(ApiGatewayProxyResponse::new(
-                    400,
-                    "Missing 'key' query parameter",
-                ))
-            }
+    } else {
+        Json(json!({"error": "Missing key parameter"}))
+    }
+}
+
+async fn delete_handler(
+    Query(params): Query<Params>,
+    Extension(client): Extension<Client>,
+) -> impl IntoResponse {
+    if let Some(key) = params.key {
+        match generate_presigned_url(&client, "DeleteObject", key).await {
+            Ok(response) => Json(response),
+            Err(err) => Json(json!({"error": format!("Internal Server Error: {}", err)})),
         }
-        ("DELETE", query_params) => {
-            if let Some(key) = query_params.first("key") {
-                generate_presigned_url(client, "DeleteObject", key, &event.context.request_id).await
-            } else {
-                Ok(ApiGatewayProxyResponse::new(
-                    400,
-                    "Missing 'key' query parameter",
-                ))
-            }
-        }
-        _ => Ok(ApiGatewayProxyResponse::new(405, "Method not allowed")),
+    } else {
+        Json(json!({"error": "Missing key parameter"}))
     }
 }
