@@ -17,7 +17,7 @@ interface ServiceProps {
 
 export class ServiceStack extends Construct {
   public readonly S3ResourcesLambda: Function;
-  // public readonly MultiPartUploadLambda: Function;
+  public readonly MultiPartLambda: Function;
 
   constructor(scope: Construct, id: string, props: ServiceProps) {
     super(scope, id);
@@ -30,7 +30,22 @@ export class ServiceStack extends Construct {
       runtime: Runtime.PROVIDED_AL2,
       architecture: Architecture.X86_64,
       timeout: Duration.seconds(10),
-      handler: "not.required",
+      handler: "bootstrap",
+      environment: {
+        RUST_BACKTRACE: "1",
+        BUCKET_NAME: props.bucket,
+      },
+    });
+
+    this.MultiPartLambda = new Function(this, "MultiPartLambda", {
+      description: "S3 Resource Manager Lambda for larger files",
+      code: Code.fromAsset(
+        "lambda-multipart/target/X86_64-unknown-linux-musl/release/lambda",
+      ),
+      runtime: Runtime.PROVIDED_AL2,
+      architecture: Architecture.X86_64,
+      timeout: Duration.seconds(10),
+      handler: "bootstrap",
       environment: {
         RUST_BACKTRACE: "1",
         BUCKET_NAME: props.bucket,

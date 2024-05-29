@@ -9,6 +9,7 @@ import { Construct } from "constructs";
 
 interface ApiGatewayStackProps {
   S3ResourcesLambda: IFunction;
+  MultiPartLambda: IFunction;
 }
 
 interface ResourceType {
@@ -24,13 +25,18 @@ export class ApiGatewayStack extends Construct {
 
   addResource(
     serviceName: string,
-    { S3ResourcesLambda }: ApiGatewayStackProps,
+    { S3ResourcesLambda, MultiPartLambda }: ApiGatewayStackProps,
   ) {
     const apigw = new aws_apigateway.RestApi(this, `${serviceName}-ApiGtw`);
 
     this.createEndPoints(S3ResourcesLambda, apigw, {
       name: "resources",
-      methods: ["GET", "PUT"],
+      methods: ["GET", "PUT", "DELETE"],
+    });
+
+    this.createEndPoints(MultiPartLambda, apigw, {
+      name: "multipart",
+      methods: ["GET", "POST"],
     });
   }
 
