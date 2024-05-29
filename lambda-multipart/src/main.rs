@@ -22,7 +22,7 @@ async fn main() -> anyhow::Result<(), Error> {
     tracing::init_default_subscriber();
 
     let cors_layer = CorsLayer::new()
-        .allow_methods(vec![Method::GET])
+        .allow_methods(vec![Method::GET, Method::POST])
         .allow_origin(Any); // TODO: Add Cors for our APiGateway Endpoint only
 
     let handler = ServiceBuilder::new()
@@ -36,12 +36,12 @@ async fn func(event: Request) -> anyhow::Result<Response<Body>, Error> {
     let config = aws_config::load_from_env().await;
     let s3_client = Client::new(&config);
 
-    match event.uri().path() {
-        "/createMultiPartUpload" => create_multi_part_upload(event, &s3_client).await,
-        "/completeMultiPartUpload" => complete_multipart_upload(event, &s3_client).await,
+    match event.method() {
+        &Method::GET => create_multi_part_upload(event, &s3_client).await,
+        &Method::POST => complete_multipart_upload(event, &s3_client).await,
         _ => Ok(Response::builder()
-            .status(404)
-            .body(Body::from("Not Found"))?),
+            .status(405)
+            .body(Body::from("Method Not Allowed"))?),
     }
 }
 
