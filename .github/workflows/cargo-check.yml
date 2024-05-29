@@ -1,0 +1,89 @@
+# This workflow runs whenever a PR is opened or updated
+# several checks performed:
+# - fmt: checks that the code is formatted according to rustfmt (uses stable)
+# - clippy: checks that the code does not contain any clippy warning
+# - doc: checks that the code can be documented without errors (uses nightly)
+# - hack: checks combinations of feature flags (not needed for this project)
+# - msrv: check that the msrc specified in the crate is correct
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+
+# Cancel in progress workflows if new code is pushed to a PR branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+name: checks
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    name: stable / fmt
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: cargo fmt --check
+        run: cargo fmt --check
+
+  clippy:
+    runs-on: ubuntu-latest
+    name: ${{ matrix.toolchain }} / clippy
+    permissions:
+      contents: read
+      checks: write
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: [stable, beta]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install ${{ matrix.toolchain }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          components: clippy
+      - name: crgo clippy
+        uses: giraffate/clippy-action@v1
+        with:
+          reporter: "github-pr-check"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  doc:
+    runs-on: ubuntu-latest
+    name: nightly / doc
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install nightly
+        uses: dtolnay/rust-toolchain@nightly
+      - name: cargo doc
+        run: cargo doc --no-deps --all-features
+        env:
+          RUSTDOCFLAGS: --cfg docsrs
+
+  msrv:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        msrv: ["1.56.1"]
+    name: ubuntu / ${{ matrix.msrv }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install ${{ matrix.msrv }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.msrv }}
+      - name: cargo +${{ matrix.msrv }} check
+        run: cargo check
