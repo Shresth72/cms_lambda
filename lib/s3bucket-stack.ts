@@ -13,6 +13,7 @@ export class S3BucketStack extends Construct {
   constructor(scope: Construct, name: string) {
     super(scope, name);
 
+    // ${name}-${uuidv4()}-bucket
     this.bucket = new Bucket(scope, `${name}-${uuidv4()}-bucket`, {
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       encryption: BucketEncryption.S3_MANAGED,

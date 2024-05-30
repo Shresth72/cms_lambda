@@ -5,12 +5,11 @@ import {
   Code,
   FunctionProps,
   Architecture,
+  Tracing,
 } from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 import { join } from "path";
 
-// TODO: The s3 downloader is just temporary, change the names of all the stuff
-// And add more lambdas later
 interface ServiceProps {
   bucket: string;
 }
@@ -23,9 +22,10 @@ export class ServiceStack extends Construct {
     super(scope, id);
 
     this.S3ResourcesLambda = new Function(this, "S3ResourcesLambda", {
+      functionName: "s3-resources",
       description: "S3 Resource Manager Lambda for smaller files",
       code: Code.fromAsset(
-        "lambda-resources/target/X86_64-unknown-linux-musl/release/lambda",
+        "/home/shrestha/rust/cms_lambda/lambda-resources/target/lambda/lambda_resources",
       ),
       runtime: Runtime.PROVIDED_AL2,
       architecture: Architecture.X86_64,
@@ -35,12 +35,14 @@ export class ServiceStack extends Construct {
         RUST_BACKTRACE: "1",
         BUCKET_NAME: props.bucket,
       },
+      tracing: Tracing.ACTIVE,
     });
 
     this.MultiPartLambda = new Function(this, "MultiPartLambda", {
+      functionName: "s3-multipart",
       description: "S3 Resource Manager Lambda for larger files",
       code: Code.fromAsset(
-        "lambda-multipart/target/X86_64-unknown-linux-musl/release/lambda",
+        "/home/shrestha/rust/cms_lambda/lambda-multipart/target/lambda/lambda_multipart",
       ),
       runtime: Runtime.PROVIDED_AL2,
       architecture: Architecture.X86_64,

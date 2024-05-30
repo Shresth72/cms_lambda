@@ -21,13 +21,15 @@ interface ResourceType {
 export class ApiGatewayStack extends Construct {
   constructor(scope: Construct, id: string, props: ApiGatewayStackProps) {
     super(scope, id);
+
+    this.addResource(id, props);
   }
 
   addResource(
     serviceName: string,
     { S3ResourcesLambda, MultiPartLambda }: ApiGatewayStackProps,
   ) {
-    const apigw = new aws_apigateway.RestApi(this, `${serviceName}-ApiGtw`);
+    const apigw = new aws_apigateway.RestApi(this, `${serviceName}`);
 
     this.createEndPoints(S3ResourcesLambda, apigw, {
       name: "resources",

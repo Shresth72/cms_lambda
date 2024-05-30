@@ -8,13 +8,13 @@ export class CmsLambdaStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const { bucket } = new S3BucketStack(this, "cmsImages");
+    const { bucket } = new S3BucketStack(this, "cms-images");
 
     const {
       S3ResourcesLambda,
       MultiPartLambda,
       // Other lambdas
-    } = new ServiceStack(this, "cmsServices", {
+    } = new ServiceStack(this, "cms-services", {
       bucket: bucket.bucketName,
     });
 
@@ -23,7 +23,7 @@ export class CmsLambdaStack extends cdk.Stack {
     bucket.grantReadWrite(S3ResourcesLambda);
     bucket.grantReadWrite(MultiPartLambda);
 
-    new ApiGatewayStack(this, "cmsApiGateway", {
+    new ApiGatewayStack(this, "cms-api-gateway", {
       S3ResourcesLambda,
       MultiPartLambda,
     });
