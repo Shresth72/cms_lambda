@@ -8,6 +8,9 @@ export class CmsLambdaStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    // TODO: Test if correct IAM roles are assumed
+    // for both the bucket and apigw
+
     const { bucket } = new S3BucketStack(this, "cms-images");
 
     const {

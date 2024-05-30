@@ -1,4 +1,4 @@
-import { aws_apigateway } from "aws-cdk-lib";
+import { aws_apigateway, aws_s3 } from "aws-cdk-lib";
 import {
   LambdaIntegration,
   LambdaRestApi,
@@ -44,19 +44,53 @@ export class ApiGatewayStack extends Construct {
 
   createEndPoints(
     handler: IFunction,
-    resource: RestApi,
+    apigw: RestApi,
     { name, methods, child }: ResourceType,
   ) {
-    const lambdaFunction = new LambdaIntegration(handler);
-    const rootResource = resource.root.addResource(name);
-    methods.map((item) => {
-      rootResource.addMethod(item, lambdaFunction);
+    const lambdaIntegration = new LambdaIntegration(handler, {
+      // Map method request data to integration request parameters 
+      // (https://docs.aws.amazon.com/apigateway/latest/developerguide/request-response-data-mappings.html#mapping-response-parameters)
+      passthroughBehavior: aws_apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
+      requestParameters: {
+        "integration.request.header.Content-Type":
+          "'application/x-www-form-urlencoded'",
+      },
+      integrationResponses: [
+        {
+          statusCode: "200",
+          responseParameters: {
+            "method.response.header.Content-Type":
+              "integration.response.header.Content-Type",
+          },
+        },
+      ],
     });
 
+    const rootResource = apigw.root.addResource(name);
+    methods.map((item) => {
+      rootResource.addMethod(item, lambdaIntegration, {
+        // For proper response `Content-Type` header from the lambdas
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseModels: {
+              "application/json": aws_apigateway.Model.EMPTY_MODEL,
+            },
+            responseParameters: {
+              // TODO: Test this
+              // ensures the handler returns this header
+              "method.response.header.Content-Type": true,
+            },
+          },
+        ],
+      });
+    });
+
+    // Currently no child methods in the lambda
     if (child) {
       const childResource = rootResource.addResource(child.name);
       child.methods.map((item) => {
-        childResource.addMethod(item, lambdaFunction);
+        childResource.addMethod(item, lambdaIntegration);
       });
     }
   }
