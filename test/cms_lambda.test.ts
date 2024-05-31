@@ -3,6 +3,10 @@ import { Template } from "aws-cdk-lib/assertions";
 import * as CmsLambda from "../lib/cms_lambda-stack";
 
 describe("Init Tests", () => {
+  const app = new cdk.App();
+  const stack = new CmsLambda.CmsLambdaStack(app, "Test-CmsLambdaStack");
+  const template = Template.fromStack(stack);
+
   function logicalIdFromResource(resource: any) {
     try {
       const resKeys = Object.keys(resource);
@@ -18,13 +22,13 @@ describe("Init Tests", () => {
     }
   }
 
-  test("aws-services-created", () => {
-    const app = new cdk.App();
-    const stack = new CmsLambda.CmsLambdaStack(app, "Test-CmsLambdaStack");
+  test("aws-iam-test", () => {
+    let iam = template.findResources("AWS::IAM::Role", {});
+  });
 
-    const template = Template.fromStack(stack);
-
+  test("aws-services-creation-test", () => {
     // Assert against Cloudformation Template
+    let iam = template.findResources("AWS::IAM::Role", {});
     template.hasResource("AWS::S3::Bucket", {});
 
     template.hasResource("AWS::ApiGateway::RestApi", {
@@ -40,11 +44,6 @@ describe("Init Tests", () => {
   });
 
   test("aws-apigateway-test", () => {
-    const app = new cdk.App();
-    const stack = new CmsLambda.CmsLambdaStack(app, "Test-CmsLambdaStack");
-
-    const template = Template.fromStack(stack);
-
     // Currently testing only the resource lambda
     const resourcesPath = template.findResources("AWS::ApiGateway::Resource", {
       Properties: {
@@ -96,7 +95,16 @@ describe("Init Tests", () => {
           ],
         },
       },
+      // Added this is in the Apigw for mapping reponses to Integration requests
+      MethodResponses: [
+        {
+          StatusCode: "200",
+          ResponseParameters: { "method.response.header.Content-Type": true },
+          ResponseModels: { "application/json": "Empty" },
+        },
+      ],
     });
+
     template.hasResourceProperties("AWS::ApiGateway::Method", {
       HttpMethod: "PUT",
       ResourceId: {
@@ -106,6 +114,7 @@ describe("Init Tests", () => {
         Ref: restApiId,
       },
     });
+
     template.hasResourceProperties("AWS::ApiGateway::Method", {
       HttpMethod: "DELETE",
       ResourceId: {
@@ -113,6 +122,24 @@ describe("Init Tests", () => {
       },
       RestApiId: {
         Ref: restApiId,
+      },
+    });
+  });
+
+  test("aws-s3-lambda-intg-test", () => {
+    let s3Id = logicalIdFromResource(
+      template.findResources("AWS::S3::Bucket", {}),
+    );
+
+    template.hasResourceProperties("AWS::Lambda::Function", {
+      Architectures: ["x86_64"],
+      Runtime: "provided.al2",
+      Environment: {
+        Variables: {
+          BUCKET_NAME: {
+            Ref: s3Id,
+          },
+        },
       },
     });
   });
