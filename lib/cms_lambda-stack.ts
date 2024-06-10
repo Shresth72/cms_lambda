@@ -14,7 +14,7 @@ export class CmsLambdaStack extends cdk.Stack {
     const { bucket } = new S3BucketStack(this, "cms-images");
 
     const {
-      S3ResourcesLambda,
+      S3PresignedLambda,
       MultiPartLambda,
       // Other lambdas
     } = new ServiceStack(this, "cms-services", {
@@ -23,11 +23,11 @@ export class CmsLambdaStack extends cdk.Stack {
 
     // Grant different access to only lambdas with s3 needed
     // Grant readwrite access to only S3ResourcesLambda
-    bucket.grantReadWrite(S3ResourcesLambda);
-    bucket.grantReadWrite(MultiPartLambda);
+    bucket.grantReadWrite(S3PresignedLambda);
+    // bucket.grantReadWrite(MultiPartLambda);
 
     new ApiGatewayStack(this, "cms-api-gateway", {
-      S3ResourcesLambda,
+      S3PresignedLambda,
       MultiPartLambda,
     });
   }

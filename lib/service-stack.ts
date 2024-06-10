@@ -15,17 +15,17 @@ interface ServiceProps {
 }
 
 export class ServiceStack extends Construct {
-  public readonly S3ResourcesLambda: Function;
+  public readonly S3PresignedLambda: Function;
   public readonly MultiPartLambda: Function;
 
   constructor(scope: Construct, id: string, props: ServiceProps) {
     super(scope, id);
 
-    this.S3ResourcesLambda = new Function(this, "S3ResourcesLambda", {
-      functionName: "s3-resources",
+    this.S3PresignedLambda = new Function(this, "S3PresignedLambda", {
+      functionName: "s3-presigned",
       description: "S3 Resource Manager Lambda for smaller files",
       code: Code.fromAsset(
-        "/home/shrestha/rust/cms_lambda/lambda-resources/target/lambda/lambda_resources",
+        "/home/shrestha/rust/cms_lambda/lambda-presigned/bootstrap",
       ),
       runtime: Runtime.PROVIDED_AL2,
       architecture: Architecture.X86_64,
@@ -41,7 +41,7 @@ export class ServiceStack extends Construct {
       functionName: "s3-multipart",
       description: "S3 Resource Manager Lambda for larger files",
       code: Code.fromAsset(
-        "/home/shrestha/rust/cms_lambda/lambda-multipart/target/lambda/lambda_multipart",
+        "/home/shrestha/rust/cms_lambda/lambda-multipart/bootstrap",
       ),
       runtime: Runtime.PROVIDED_AL2,
       architecture: Architecture.X86_64,

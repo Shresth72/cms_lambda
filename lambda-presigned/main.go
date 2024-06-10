@@ -27,10 +27,11 @@ type PresignResponse struct {
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	bucket, region := utils.LoadConfig()
 
-	var u string
+	var url string
 	var signedHeaders http.Header
   var err error
 
+  // Bucket Key in the QueryParams
 	key := request.QueryStringParameters["key"]
 	if key == "" {
 		return events.APIGatewayProxyResponse{
@@ -50,14 +51,21 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
 		})
-		u, signedHeaders, err = sdkReq.PresignRequest(15 * time.Minute)
+		url, signedHeaders, err = sdkReq.PresignRequest(15 * time.Minute)
 
 	case "PUT":
 		sdkReq, _ := s3Svc.PutObjectRequest(&s3.PutObjectInput{
 			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
 		})
-		u, signedHeaders, err = sdkReq.PresignRequest(15 * time.Minute)
+		url, signedHeaders, err = sdkReq.PresignRequest(15 * time.Minute)
+
+  case "DELETE":
+    sdkReq, _ := s3Svc.DeleteObjectRequest(&s3.DeleteObjectInput{
+      Bucket: aws.String(bucket),
+      Key: aws.String(key),
+    })
+		url, signedHeaders, err = sdkReq.PresignRequest(15 * time.Minute)
 
 	default:
 		log.Print("invalid method provided\n", request.HTTPMethod, err)
@@ -72,7 +80,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	}
 
 	return utils.CreateResponse(200, PresignResponse{
-		URL:    u,
+		URL:    url,
 		Header: signedHeaders,
 	}), nil
 }

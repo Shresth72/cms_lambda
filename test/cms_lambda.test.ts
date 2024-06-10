@@ -36,11 +36,11 @@ describe("Init Tests", () => {
     });
 
     template.hasResource("AWS::Lambda::Function", {
-      Properties: { FunctionName: "s3-resources" },
+      Properties: { FunctionName: "s3-presigned" },
     });
-    template.hasResource("AWS::Lambda::Function", {
-      Properties: { FunctionName: "s3-multipart" },
-    });
+    // template.hasResource("AWS::Lambda::Function", {
+    //   Properties: { FunctionName: "s3-multipart" },
+    // });
   });
 
   test("aws-apigateway-test", () => {

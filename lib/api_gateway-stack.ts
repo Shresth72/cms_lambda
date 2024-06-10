@@ -8,7 +8,7 @@ import { IFunction } from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 
 interface ApiGatewayStackProps {
-  S3ResourcesLambda: IFunction;
+  S3PresignedLambda: IFunction;
   MultiPartLambda: IFunction;
 }
 
@@ -27,18 +27,18 @@ export class ApiGatewayStack extends Construct {
 
   addResource(
     serviceName: string,
-    { S3ResourcesLambda, MultiPartLambda }: ApiGatewayStackProps,
+    { S3PresignedLambda, MultiPartLambda }: ApiGatewayStackProps,
   ) {
     const apigw = new aws_apigateway.RestApi(this, `${serviceName}`);
 
-    this.createEndPoints(S3ResourcesLambda, apigw, {
-      name: "resources",
+    this.createEndPoints(S3PresignedLambda, apigw, {
+      name: "presigned",
       methods: ["GET", "PUT", "DELETE"],
     });
 
     this.createEndPoints(MultiPartLambda, apigw, {
       name: "multipart",
-      methods: ["GET", "POST"],
+      methods: ["POST"],
     });
   }
 
@@ -48,7 +48,7 @@ export class ApiGatewayStack extends Construct {
     { name, methods, child }: ResourceType,
   ) {
     const lambdaIntegration = new LambdaIntegration(handler, {
-      // Map method request data to integration request parameters 
+      // Map method request data to integration request parameters
       // (https://docs.aws.amazon.com/apigateway/latest/developerguide/request-response-data-mappings.html#mapping-response-parameters)
       passthroughBehavior: aws_apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
       requestParameters: {
