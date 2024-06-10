@@ -7,5 +7,3 @@ node_modules
 .cdk.staging
 cdk.out
 
-lambda-multipart
-lambda-resources
