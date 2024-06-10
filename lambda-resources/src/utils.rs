@@ -1,4 +1,5 @@
 use axum::{response::IntoResponse, Json};
+use lambda_http::http::StatusCode;
 use serde::{de, Deserialize, Deserializer};
 use serde_json::{json, Value};
 use std::{fmt, str::FromStr};
@@ -18,7 +19,11 @@ where
 
 pub fn handle_response(response: anyhow::Result<Value>) -> impl IntoResponse {
     match response {
-        Ok(data) => Json(data),
-        Err(err) => Json(json!({"error": format!("Internal Server Error: {}", err)})),
+        Ok(data) => (StatusCode::OK, Json(data)).into_response(),
+        Err(err) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"error": format!("Internal Server Error: {}", err)})),
+        )
+            .into_response(),
     }
 }

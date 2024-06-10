@@ -32,7 +32,6 @@ export class ServiceStack extends Construct {
       timeout: Duration.seconds(10),
       handler: "bootstrap",
       environment: {
-        RUST_BACKTRACE: "1",
         BUCKET_NAME: props.bucket,
       },
       tracing: Tracing.ACTIVE,
@@ -49,7 +48,6 @@ export class ServiceStack extends Construct {
       timeout: Duration.seconds(10),
       handler: "bootstrap",
       environment: {
-        RUST_BACKTRACE: "1",
         BUCKET_NAME: props.bucket,
       },
     });

@@ -1,12 +1,17 @@
 mod s3;
-use s3::{generate_presigned_url, list_content};
+use s3::S3ClientTrait;
 
 mod utils;
 use utils::{empty_string_as_none, handle_response};
 
+mod test;
+
 use aws_sdk_s3::Client;
 use axum::{extract::Query, response::IntoResponse, routing::get, Extension, Json, Router};
-use lambda_http::{http::Method, tracing, Error};
+use lambda_http::{
+    http::{Method, StatusCode},
+    tracing, Error,
+};
 use serde::Deserialize;
 use serde_json::json;
 use tower_http::cors::{Any, CorsLayer};
@@ -47,9 +52,9 @@ async fn get_handler(
     Extension(client): Extension<Client>,
 ) -> impl IntoResponse {
     let response = if let Some(key) = params.key {
-        generate_presigned_url(&client, "GetObject", key).await
+        client.generate_presigned_url("GetObject", key).await
     } else {
-        list_content(&client).await
+        client.list_content().await
     };
     handle_response(response)
 }
@@ -59,12 +64,20 @@ async fn put_handler(
     Extension(client): Extension<Client>,
 ) -> impl IntoResponse {
     if let Some(key) = params.key {
-        match generate_presigned_url(&client, "PutObject", key).await {
-            Ok(response) => Json(response),
-            Err(err) => Json(json!({"error": format!("Internal Server Error: {}", err)})),
+        match client.generate_presigned_url("PutObject", key).await {
+            Ok(response) => (StatusCode::OK, Json(response)).into_response(),
+            Err(err) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"error": format!("Internal Server Error: {}", err)})),
+            )
+                .into_response(),
         }
     } else {
-        Json(json!({"error": "Missing key parameter"}))
+        (
+            StatusCode::BAD_REQUEST,
+            Json(json!({"error": "Missing key parameter"})),
+        )
+            .into_response()
     }
 }
 
@@ -73,11 +86,19 @@ async fn delete_handler(
     Extension(client): Extension<Client>,
 ) -> impl IntoResponse {
     if let Some(key) = params.key {
-        match generate_presigned_url(&client, "DeleteObject", key).await {
-            Ok(response) => Json(response),
-            Err(err) => Json(json!({"error": format!("Internal Server Error: {}", err)})),
+        match client.generate_presigned_url("DeleteObject", key).await {
+            Ok(response) => (StatusCode::OK, Json(response)).into_response(),
+            Err(err) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"error": format!("Internal Server Error: {}", err)})),
+            )
+                .into_response(),
         }
     } else {
-        Json(json!({"error": "Missing key parameter"}))
+        (
+            StatusCode::BAD_REQUEST,
+            Json(json!({"error": "Missing key parameter"})),
+        )
+            .into_response()
     }
 }
