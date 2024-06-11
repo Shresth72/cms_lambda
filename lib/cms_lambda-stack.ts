@@ -24,7 +24,7 @@ export class CmsLambdaStack extends cdk.Stack {
     // Grant different access to only lambdas with s3 needed
     // Grant readwrite access to only S3ResourcesLambda
     bucket.grantReadWrite(S3PresignedLambda);
-    // bucket.grantReadWrite(MultiPartLambda);
+    bucket.grantReadWrite(MultiPartLambda);
 
     new ApiGatewayStack(this, "cms-api-gateway", {
       S3PresignedLambda,

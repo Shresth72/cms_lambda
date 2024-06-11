@@ -32,6 +32,8 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
   var err error
 
   // Bucket Key in the QueryParams
+
+  // https://website.com/presigned?key=
 	key := request.QueryStringParameters["key"]
 	if key == "" {
 		return events.APIGatewayProxyResponse{
